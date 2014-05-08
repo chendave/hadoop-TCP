@@ -331,7 +331,8 @@ public class NodeStatusUpdaterImpl extends AbstractService implements
 
     NodeHealthStatus nodeHealthStatus = this.context.getNodeHealthStatus();
     nodeHealthStatus.setHealthReport(healthChecker.getHealthReport());
-    nodeHealthStatus.setIsNodeHealthy(healthChecker.isHealthy());
+//Add by ME
+    nodeHealthStatus.setIsNodeHealthy(healthChecker.isHealthy(nodeStatus.getNodeId().getHost()));
     nodeHealthStatus.setLastHealthReportTime(
         healthChecker.getLastHealthReportTime());
     if (LOG.isDebugEnabled()) {
