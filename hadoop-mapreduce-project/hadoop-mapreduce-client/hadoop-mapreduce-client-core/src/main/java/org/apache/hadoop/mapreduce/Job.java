@@ -1313,6 +1313,8 @@ public class Job extends JobContextImpl implements JobContext {
     Job.TaskStatusFilter filter;
     Configuration clientConf = getConfiguration();
     filter = Job.getTaskOutputFilter(clientConf);
+     //Add by ME
+    cluster.printNodes();
     JobID jobId = getJobID();
     LOG.info("Running job: " + jobId);
     int eventCounter = 0;

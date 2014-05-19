@@ -153,6 +153,12 @@ public class YARNRunner implements ClientProtocol {
     throw new UnsupportedOperationException("Use Token.renew instead");
   }
 
+//Add by ME
+  @Override
+  public  void printNodes(){
+        resMgrDelegate.printNodes();
+}
+
   @Override
   public TaskTrackerInfo[] getActiveTrackers() throws IOException,
       InterruptedException {

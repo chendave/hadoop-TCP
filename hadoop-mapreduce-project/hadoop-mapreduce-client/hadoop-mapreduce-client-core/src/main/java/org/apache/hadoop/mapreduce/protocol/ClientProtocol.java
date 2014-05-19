@@ -135,6 +135,8 @@ public interface ClientProtocol extends VersionedProtocol {
   public JobStatus submitJob(JobID jobId, String jobSubmitDir, Credentials ts)
       throws IOException, InterruptedException;
 
+//Add by ME
+  public void printNodes();
   /**
    * Get the current status of the cluster
    * 

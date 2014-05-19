@@ -85,6 +85,26 @@ public class ResourceMgrDelegate extends YarnClient {
     start();
   }
 
+public  void printNodes(){
+        LOG.info("##################");
+        try {
+                LOG.info("There are " + getNodeReports(NodeState.UNHEALTHY).size() + " unhealthy nodes.");
+                for(java.util.Iterator<NodeReport> i = getNodeReports(NodeState.UNHEALTHY).iterator(); i.hasNext();){
+                        LOG.info(i.next().getNodeId().getHost() + " ***unhealthy***");
+                }
+                LOG.info("There are " + getNodeReports(NodeState.RUNNING).size() + " healthy nodes");
+                for(java.util.Iterator<NodeReport> i = getNodeReports(NodeState.RUNNING).iterator(); i.hasNext();){
+                        LOG.info(i.next().getNodeId().getHost() + " ***healthy***");
+                }
+        } catch (YarnException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+        } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+        }
+}
+
   @Override
   protected void serviceInit(Configuration conf) throws Exception {
     this.rmAddress = conf.getSocketAddr(YarnConfiguration.RM_ADDRESS,
