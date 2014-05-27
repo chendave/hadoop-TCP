@@ -537,6 +537,9 @@ public class YarnConfiguration extends Configuration {
   public static final String NM_CONTAINER_MON_PROCESS_TREE =
     NM_PREFIX + "container-monitor.process-tree.class";
 
+  //Add by ME
+  public static final String NM_TRUST_CHECK_ENABLE =
+	NM_PREFIX + "node-trust-checker.enable";
   /**
    * Enable/Disable disks' health checker. Default is true.
    * An expert level configuration property.

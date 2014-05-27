@@ -31,6 +31,8 @@ public class NodeHealthCheckerService extends CompositeService {
   private NodeHealthScriptRunner nodeHealthScriptRunner;
   private LocalDirsHandlerService dirsHandler;
 
+//Add by ME
+  private boolean attestNodeTrust = false;
   static final String SEPARATOR = ";";
 
   public NodeHealthCheckerService() {
@@ -45,6 +47,8 @@ public class NodeHealthCheckerService extends CompositeService {
       addService(nodeHealthScriptRunner);
     }
     addService(dirsHandler);
+//Add by ME
+    this.attestNodeTrust = conf.getBoolean(YarnConfiguration.NM_TRUST_CHECK_ENABLE, true);
     super.serviceInit(conf);
   }
 
@@ -67,10 +71,12 @@ public class NodeHealthCheckerService extends CompositeService {
   boolean isHealthy(String hostname) {
     boolean scriptHealthStatus = (nodeHealthScriptRunner == null) ? true
         : nodeHealthScriptRunner.isHealthy();//Add by ME
-	boolean isTrust = AttestationService.testHost(hostname);
-	
-    return scriptHealthStatus && dirsHandler.areDisksHealthy() && isTrust;
+     if(!this.attestNodeTrust)
+           return scriptHealthStatus && dirsHandler.areDisksHealthy();
+     boolean isTrust = AttestationService.testHost(hostname);	
+     return scriptHealthStatus && dirsHandler.areDisksHealthy() && isTrust;
   }
+
   boolean isHealthy(){
 	
     boolean scriptHealthStatus = (nodeHealthScriptRunner == null) ? true
