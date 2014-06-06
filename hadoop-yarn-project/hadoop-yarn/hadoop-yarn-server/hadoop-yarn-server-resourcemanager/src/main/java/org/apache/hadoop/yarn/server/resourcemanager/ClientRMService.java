@@ -450,7 +450,8 @@ public class ClientRMService extends AbstractService implements
     }
     Collection<RMNode> nodes = RMServerUtils.queryRMNodes(rmContext,
         nodeStates);
-    
+      LOG.info("CCCCCCCCCCCCCCCCCCCCCCC");
+      LOG.info("DDDDDDDDDDDDDDDDDDDD " + nodeStates.toString() + " node.size " + nodes.size()); 
     List<NodeReport> nodeReports = new ArrayList<NodeReport>(nodes.size());
     for (RMNode nodeInfo : nodes) {
       nodeReports.add(createNodeReports(nodeInfo));
@@ -504,7 +505,10 @@ public class ClientRMService extends AbstractService implements
         rmNode.getHttpAddress(), rmNode.getRackName(), used,
         rmNode.getTotalCapability(), numContainers,
         rmNode.getHealthReport(),
-        rmNode.getLastHealthReportTime());
+        rmNode.getLastHealthReportTime(),
+//Add by ME
+	rmNode.getTrustReport(),
+        rmNode.getLastTrustReportTime());	
 
     return report;
   }

@@ -48,6 +48,7 @@ import org.apache.hadoop.yarn.event.EventHandler;
 import org.apache.hadoop.yarn.exceptions.YarnRuntimeException;
 import org.apache.hadoop.yarn.factory.providers.RecordFactoryProvider;
 import org.apache.hadoop.yarn.server.api.records.NodeHealthStatus;
+import org.apache.hadoop.yarn.server.api.records.NodeTrustStatus;
 import org.apache.hadoop.yarn.server.nodemanager.containermanager.ContainerManagerImpl;
 import org.apache.hadoop.yarn.server.nodemanager.containermanager.application.Application;
 import org.apache.hadoop.yarn.server.nodemanager.containermanager.container.Container;
@@ -71,6 +72,8 @@ public class NodeManager extends CompositeService
   protected final NodeManagerMetrics metrics = NodeManagerMetrics.create();
   private ApplicationACLsManager aclsManager;
   private NodeHealthCheckerService nodeHealthChecker;
+  //Add by ME
+  private NodeTrustCheckerService nodeTrustChecker;
   private LocalDirsHandlerService dirsHandler;
   private Context context;
   private AsyncDispatcher dispatcher;
@@ -82,6 +85,12 @@ public class NodeManager extends CompositeService
   
   public NodeManager() {
     super(NodeManager.class.getName());
+  }
+//Add by ME
+  protected NodeStatusUpdater createNodeStatusUpdater(Context context,
+      Dispatcher dispatcher, NodeHealthCheckerService healthChecker,NodeTrustCheckerService trustChecker) {
+    return new NodeStatusUpdaterImpl(context, dispatcher, healthChecker,trustChecker,
+      metrics);
   }
 
   protected NodeStatusUpdater createNodeStatusUpdater(Context context,
@@ -157,9 +166,13 @@ public class NodeManager extends CompositeService
     addService(nodeHealthChecker);
     dirsHandler = nodeHealthChecker.getDiskHandler();
 
+    nodeTrustChecker = new NodeTrustCheckerService();
+    addService(nodeTrustChecker);
+    
 
-    nodeStatusUpdater =
-        createNodeStatusUpdater(context, dispatcher, nodeHealthChecker);
+    nodeStatusUpdater =//Add by ME
+        createNodeStatusUpdater(context, dispatcher, nodeHealthChecker,nodeTrustChecker);
+       // createNodeStatusUpdater(context, dispatcher, nodeHealthChecker);
 
     NodeResourceMonitor nodeResourceMonitor = createNodeResourceMonitor();
     addService(nodeResourceMonitor);
@@ -249,7 +262,9 @@ public class NodeManager extends CompositeService
     private WebServer webServer;
     private final NodeHealthStatus nodeHealthStatus = RecordFactoryProvider
         .getRecordFactory(null).newRecordInstance(NodeHealthStatus.class);
-
+    //Add by ME
+    private final NodeTrustStatus nodeTrustStatus = RecordFactoryProvider
+    		.getRecordFactory(null).newRecordInstance(NodeTrustStatus.class);
     public NMContext(NMContainerTokenSecretManager containerTokenSecretManager,
         NMTokenSecretManagerInNM nmTokenSecretManager) {
       this.containerTokenSecretManager = containerTokenSecretManager;
@@ -257,6 +272,9 @@ public class NodeManager extends CompositeService
       this.nodeHealthStatus.setIsNodeHealthy(true);
       this.nodeHealthStatus.setHealthReport("Healthy");
       this.nodeHealthStatus.setLastHealthReportTime(System.currentTimeMillis());
+      this.nodeTrustStatus.setIsNodeTrust(true);
+      this.nodeTrustStatus.setTrustReport("Trust");
+      this.nodeTrustStatus.setLastTrustReportTime(System.currentTimeMillis());
     }
 
     /**
@@ -313,6 +331,12 @@ public class NodeManager extends CompositeService
     public void setNodeId(NodeId nodeId) {
       this.nodeId = nodeId;
     }
+//Add by ME
+    @Override
+    public NodeTrustStatus getNodeTrustStatus() {
+	// TODO Auto-generated method stub
+	return this.nodeTrustStatus;
+	}
   }
 
 
@@ -322,7 +346,11 @@ public class NodeManager extends CompositeService
   public NodeHealthCheckerService getNodeHealthChecker() {
     return nodeHealthChecker;
   }
-
+//Add by ME
+  public NodeTrustCheckerService getNodeTrustChecker() {
+	  return nodeTrustChecker;
+  }
+  
   private void initAndStartNodeManager(Configuration conf, boolean hasToReboot) {
     try {
 

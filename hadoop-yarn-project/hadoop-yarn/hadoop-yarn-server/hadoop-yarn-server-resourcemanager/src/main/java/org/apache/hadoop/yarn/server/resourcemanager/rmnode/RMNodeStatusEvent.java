@@ -25,24 +25,38 @@ import org.apache.hadoop.yarn.api.records.ContainerStatus;
 import org.apache.hadoop.yarn.api.records.NodeId;
 import org.apache.hadoop.yarn.server.api.protocolrecords.NodeHeartbeatResponse;
 import org.apache.hadoop.yarn.server.api.records.NodeHealthStatus;
+import org.apache.hadoop.yarn.server.api.records.NodeTrustStatus;
 
 public class RMNodeStatusEvent extends RMNodeEvent {
 
   private final NodeHealthStatus nodeHealthStatus;
+  private final NodeTrustStatus nodeTrustStatus;
   private final List<ContainerStatus> containersCollection;
   private final NodeHeartbeatResponse latestResponse;
   private final List<ApplicationId> keepAliveAppIds;
+
+  public RMNodeStatusEvent(NodeId nodeId, NodeHealthStatus nodeHealthStatus,
+      NodeTrustStatus  nodeTrustStatus,
+      List<ContainerStatus> collection, List<ApplicationId> keepAliveAppIds,
+      NodeHeartbeatResponse latestResponse) {
+    super(nodeId, RMNodeEventType.STATUS_UPDATE);
+    this.nodeHealthStatus = nodeHealthStatus;
+    this.nodeTrustStatus = nodeTrustStatus;
+    this.containersCollection = collection;
+    this.keepAliveAppIds = keepAliveAppIds;
+    this.latestResponse = latestResponse;
+  }
 
   public RMNodeStatusEvent(NodeId nodeId, NodeHealthStatus nodeHealthStatus,
       List<ContainerStatus> collection, List<ApplicationId> keepAliveAppIds,
       NodeHeartbeatResponse latestResponse) {
     super(nodeId, RMNodeEventType.STATUS_UPDATE);
     this.nodeHealthStatus = nodeHealthStatus;
+    this.nodeTrustStatus = null;
     this.containersCollection = collection;
     this.keepAliveAppIds = keepAliveAppIds;
     this.latestResponse = latestResponse;
   }
-
   public NodeHealthStatus getNodeHealthStatus() {
     return this.nodeHealthStatus;
   }
@@ -55,6 +69,11 @@ public class RMNodeStatusEvent extends RMNodeEvent {
     return this.latestResponse;
   }
   
+  //Add by ME
+  public NodeTrustStatus getNodeTrustStatus(){
+	  return this.nodeTrustStatus;
+  }
+
   public List<ApplicationId> getKeepAliveAppIds() {
     return this.keepAliveAppIds;
   }

@@ -39,6 +39,10 @@ public interface NodeStatus {
   NodeHealthStatus getNodeHealthStatus();
   void setNodeHealthStatus(NodeHealthStatus healthStatus);
 
+  //Add by ME
+  NodeTrustStatus getNodeTrustStatus();
+  void setNodeTrustStatus(NodeTrustStatus trustStatus);
+
   public abstract void setNodeId(NodeId nodeId);
   public abstract void setResponseId(int responseId);
 }

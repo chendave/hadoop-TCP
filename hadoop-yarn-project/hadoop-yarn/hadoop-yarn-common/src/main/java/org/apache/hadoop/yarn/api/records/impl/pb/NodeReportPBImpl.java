@@ -92,7 +92,34 @@ public class NodeReportPBImpl extends NodeReport {
     maybeInitBuilder();
     builder.setLastHealthReportTime(lastHealthReportTime);
   }
+   //Add by ME
+  @Override
+  public String getTrustReport() {
+    NodeReportProtoOrBuilder p = viaProto ? proto : builder;
+    return p.getTrustReport();
+  }
   
+  @Override
+  public void setTrustReport(String trustReport) {
+    maybeInitBuilder();
+    if (trustReport == null) {
+      builder.clearTrustReport();
+      return;
+    }
+    builder.setTrustReport(trustReport);
+  }
+  
+  @Override
+  public long getLastTrustReportTime() {
+    NodeReportProtoOrBuilder p = viaProto ? proto : builder;
+    return p.getLastTrustReportTime();
+  }
+  
+  @Override
+  public void setLastTrustReportTime(long lastTrustReportTime) {
+    maybeInitBuilder();
+    builder.setLastTrustReportTime(lastTrustReportTime);
+  } 
   @Override
   public String getHttpAddress() {
     NodeReportProtoOrBuilder p = viaProto ? proto : builder;

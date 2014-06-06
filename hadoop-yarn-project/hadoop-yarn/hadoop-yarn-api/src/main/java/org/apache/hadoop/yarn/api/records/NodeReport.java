@@ -63,7 +63,28 @@ public abstract class NodeReport {
     nodeReport.setLastHealthReportTime(lastHealthReportTime);
     return nodeReport;
   }
-
+//Add by ME
+  @Private
+  @Unstable
+  public static NodeReport newInstance(NodeId nodeId, NodeState nodeState,
+      String httpAddress, String rackName, Resource used, Resource capability,
+      int numContainers, String healthReport, long lastHealthReportTime,
+      String trustReport, long lastTrustReportTime) {
+    NodeReport nodeReport = Records.newRecord(NodeReport.class);
+    nodeReport.setNodeId(nodeId);
+    nodeReport.setNodeState(nodeState);
+    nodeReport.setHttpAddress(httpAddress);
+    nodeReport.setRackName(rackName);
+    nodeReport.setUsed(used);
+    nodeReport.setCapability(capability);
+    nodeReport.setNumContainers(numContainers);
+    nodeReport.setHealthReport(healthReport);
+    nodeReport.setLastHealthReportTime(lastHealthReportTime);
+    //Add by ME
+    nodeReport.setTrustReport(trustReport);
+    nodeReport.setLastTrustReportTime(lastTrustReportTime);
+    return nodeReport;
+  }
   /**
    * Get the <code>NodeId</code> of the node.
    * @return <code>NodeId</code> of the node
@@ -172,4 +193,20 @@ public abstract class NodeReport {
   @Private
   @Unstable
   public abstract void setLastHealthReportTime(long lastHealthReport);
+//Add by ME
+  @Public
+  @Stable
+  public abstract String getTrustReport();
+
+  @Private
+  @Unstable
+  public abstract void setTrustReport(String trustReport);
+
+  @Public
+  @Stable
+  public abstract long getLastTrustReportTime();
+
+  @Private
+  @Unstable
+  public abstract void setLastTrustReportTime(long lastTrustReport);
 }

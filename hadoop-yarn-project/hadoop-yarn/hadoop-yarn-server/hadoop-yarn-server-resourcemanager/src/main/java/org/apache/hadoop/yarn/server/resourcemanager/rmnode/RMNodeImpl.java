@@ -48,6 +48,7 @@ import org.apache.hadoop.yarn.factories.RecordFactory;
 import org.apache.hadoop.yarn.factory.providers.RecordFactoryProvider;
 import org.apache.hadoop.yarn.server.api.protocolrecords.NodeHeartbeatResponse;
 import org.apache.hadoop.yarn.server.api.records.NodeHealthStatus;
+import org.apache.hadoop.yarn.server.api.records.NodeTrustStatus;
 import org.apache.hadoop.yarn.server.resourcemanager.ClusterMetrics;
 import org.apache.hadoop.yarn.server.resourcemanager.NodesListManagerEvent;
 import org.apache.hadoop.yarn.server.resourcemanager.NodesListManagerEventType;
@@ -97,6 +98,10 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
 
   private String healthReport;
   private long lastHealthReportTime;
+  
+  //Add by ME
+  private String trustReport;
+  private long lastTrustReportTime;
 
   /* set of containers that have just launched */
   private final Map<ContainerId, ContainerStatus> justLaunchedContainers = 
@@ -127,8 +132,8 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
 
      //Transitions from RUNNING state
      .addTransition(NodeState.RUNNING, 
-         EnumSet.of(NodeState.RUNNING, NodeState.UNHEALTHY),
-         RMNodeEventType.STATUS_UPDATE, new StatusUpdateWhenHealthyTransition())
+         EnumSet.of(NodeState.RUNNING, NodeState.UNHEALTHY, NodeState.UNTRUST),
+         RMNodeEventType.STATUS_UPDATE, new StatusUpdateWhenHealthyAndTrustTransition())
      .addTransition(NodeState.RUNNING, NodeState.DECOMMISSIONED,
          RMNodeEventType.DECOMMISSION,
          new DeactivateNodeTransition(NodeState.DECOMMISSIONED))
@@ -147,7 +152,7 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
 
      //Transitions from UNHEALTHY state
      .addTransition(NodeState.UNHEALTHY, 
-         EnumSet.of(NodeState.UNHEALTHY, NodeState.RUNNING),
+         EnumSet.of(NodeState.UNHEALTHY, NodeState.RUNNING, NodeState.UNTRUST),
          RMNodeEventType.STATUS_UPDATE, new StatusUpdateWhenUnHealthyTransition())
      .addTransition(NodeState.UNHEALTHY, NodeState.DECOMMISSIONED,
          RMNodeEventType.DECOMMISSION,
@@ -163,6 +168,27 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
      .addTransition(NodeState.UNHEALTHY, NodeState.UNHEALTHY,
          RMNodeEventType.CLEANUP_APP, new CleanUpAppTransition())
      .addTransition(NodeState.UNHEALTHY, NodeState.UNHEALTHY,
+         RMNodeEventType.CLEANUP_CONTAINER, new CleanUpContainerTransition())
+
+  	 //Add by ME
+  	 //Transitions from UNTRUST state
+  	 .addTransition(NodeState.UNTRUST, 
+  			 EnumSet.of(NodeState.UNTRUST,NodeState.RUNNING,NodeState.UNHEALTHY),
+  			 RMNodeEventType.STATUS_UPDATE,new StatusUpdateWhenUnTrustTransition())
+  	 .addTransition(NodeState.UNTRUST,NodeState.DECOMMISSIONED,
+  			 RMNodeEventType.DECOMMISSION,
+  			 new DeactivateNodeTransition(NodeState.DECOMMISSIONED))
+     .addTransition(NodeState.UNTRUST, NodeState.LOST,
+         RMNodeEventType.EXPIRE,
+         new DeactivateNodeTransition(NodeState.LOST))
+     .addTransition(NodeState.UNTRUST, NodeState.REBOOTED,
+       RMNodeEventType.REBOOTING,
+         new DeactivateNodeTransition(NodeState.REBOOTED))
+     .addTransition(NodeState.UNTRUST, NodeState.UNTRUST,
+         RMNodeEventType.RECONNECTED, new ReconnectNodeTransition())
+     .addTransition(NodeState.UNTRUST, NodeState.UNTRUST,
+         RMNodeEventType.CLEANUP_APP, new CleanUpAppTransition())
+     .addTransition(NodeState.UNTRUST, NodeState.UNTRUST,
          RMNodeEventType.CLEANUP_CONTAINER, new CleanUpContainerTransition())
          
      // create the topology tables
@@ -184,7 +210,9 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
     this.node = node;
     this.healthReport = "Healthy";
     this.lastHealthReportTime = System.currentTimeMillis();
-
+//Add by ME
+    this.trustReport = "Trust";
+    this.lastTrustReportTime = System.currentTimeMillis();
     this.latestNodeHeartBeatResponse.setResponseId(0);
 
     ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
@@ -288,6 +316,45 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
     }
   }
 
+  //Add by ME
+  @Override
+  public String getTrustReport(){
+	  this.readLock.lock();
+	  try{
+		  return this.trustReport;
+	  }finally{
+		  this.readLock.unlock();
+	  }
+  }
+  
+  public void setTrustReport(String trustReport){
+	  this.writeLock.lock();
+	  try{
+		  this.trustReport = trustReport;
+	  }finally{
+		  this.writeLock.unlock();
+	  }
+  }
+  
+  @Override
+  public long getLastTrustReportTime(){
+	  this.readLock.lock();
+	  try{
+		  return this.lastTrustReportTime;
+	  }finally {
+		  this.readLock.unlock();
+	  }
+  }
+
+  public void setLastTrustReportTime(long lastTrustReportTime){
+	  this.writeLock.lock();
+	  try{
+		  this.lastTrustReportTime = lastTrustReportTime;
+	  }finally{
+		  this.writeLock.unlock();
+	  }
+  }
+
   @Override
   public NodeState getState() {
     this.readLock.lock();
@@ -389,6 +456,9 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
       break;
     case UNHEALTHY:
       metrics.decrNumUnhealthyNMs();
+     //Add by ME
+    case UNTRUST:
+      metrics.decrNumUntrustNMs();
       break;
     }
   }
@@ -404,6 +474,9 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
       case UNHEALTHY:
         metrics.decrNumUnhealthyNMs();
         break;
+      case UNTRUST:
+	    metrics.decrNumUntrustNMs();
+	    break;
     }
 
     switch (finalState) {
@@ -418,6 +491,9 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
       break;
     case UNHEALTHY:
       metrics.incrNumUnhealthyNMs();
+      break;
+    case UNTRUST:
+      metrics.incrNumUntrustNMs();
       break;
     }
   }
@@ -460,8 +536,10 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
           && rmNode.getHttpPort() == newNode.getHttpPort()) {
         // Reset heartbeat ID since node just restarted.
         rmNode.getLastNodeHeartBeatResponse().setResponseId(0);
-        if (rmNode.getState() != NodeState.UNHEALTHY) {
-          // Only add new node if old state is not UNHEALTHY
+        //Add by ME
+        if ((rmNode.getState() != NodeState.UNHEALTHY)
+        		&& (rmNode.getState() != NodeState.UNTRUST)) {
+          // Only add new node if old state is not UNHEALTHY and not UNTRUST
           rmNode.context.getDispatcher().getEventHandler().handle(
               new NodeAddedSchedulerEvent(rmNode));
          }
@@ -473,6 +551,10 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
           break;
         case UNHEALTHY:
           ClusterMetrics.getMetrics().decrNumUnhealthyNMs();
+          break;
+          //Add by ME
+        case UNTRUST:
+          ClusterMetrics.getMetrics().decrNumUntrustNMs();
           break;
         }
         rmNode.context.getRMNodes().put(newNode.getNodeID(), newNode);
@@ -518,7 +600,8 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
       // Then node is already been removed from the
       // Scheduler
       NodeState initialState = rmNode.getState();
-      if (!initialState.equals(NodeState.UNHEALTHY)) {
+      //Add by ME
+      if (!initialState.equals(NodeState.UNHEALTHY) && !initialState.equals(NodeState.UNTRUST)) {
         rmNode.context.getDispatcher().getEventHandler()
           .handle(new NodeRemovedSchedulerEvent(rmNode));
       }
@@ -537,7 +620,7 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
     }
   }
 
-  public static class StatusUpdateWhenHealthyTransition implements
+  public static class StatusUpdateWhenHealthyAndTrustTransition implements
       MultipleArcTransition<RMNodeImpl, RMNodeEvent, NodeState> {
     @Override
     public NodeState transition(RMNodeImpl rmNode, RMNodeEvent event) {
@@ -552,9 +635,15 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
       rmNode.setHealthReport(remoteNodeHealthStatus.getHealthReport());
       rmNode.setLastHealthReportTime(
           remoteNodeHealthStatus.getLastHealthReportTime());
-      if (!remoteNodeHealthStatus.getIsNodeHealthy()) {
+      //Add by ME
+      NodeTrustStatus remoteNodeTrustStatus = 
+        	  statusEvent.getNodeTrustStatus();
+      rmNode.setTrustReport(remoteNodeTrustStatus.getTrustReport());
+      rmNode.setLastHealthReportTime(
+    		  remoteNodeTrustStatus.getLastTrustReportTime());
+      if (!remoteNodeHealthStatus.getIsNodeHealthy() ) {//assumed 'trust' and 'healthy' are mutual
         LOG.info("Node " + rmNode.nodeId + " reported UNHEALTHY with details: "
-            + remoteNodeHealthStatus.getHealthReport());
+            + remoteNodeHealthStatus.getHealthReport() );
         rmNode.nodeUpdateQueue.clear();
         // Inform the scheduler
         rmNode.context.getDispatcher().getEventHandler().handle(
@@ -567,7 +656,22 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
             NodeState.UNHEALTHY);
         return NodeState.UNHEALTHY;
       }
-
+//Add by ME
+      if(!remoteNodeTrustStatus.getIsNodeTrust()){
+          LOG.info("Node " + rmNode.nodeId + " reported UNTRUST with details: "
+                  + remoteNodeTrustStatus.getTrustReport() );
+              rmNode.nodeUpdateQueue.clear();  
+              // Inform the scheduler
+              rmNode.context.getDispatcher().getEventHandler().handle(
+                  new NodeRemovedSchedulerEvent(rmNode));
+              rmNode.context.getDispatcher().getEventHandler().handle(
+                  new NodesListManagerEvent(
+                      NodesListManagerEventType.NODE_UNUSABLE, rmNode));
+              // Update metrics
+              rmNode.updateMetricsForDeactivatedNode(rmNode.getState(),
+                  NodeState.UNTRUST);
+              return NodeState.UNTRUST;
+      }
       // Filter the map to only obtain just launched containers and finished
       // containers.
       List<ContainerStatus> newlyLaunchedContainers = 
@@ -641,7 +745,20 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
       rmNode.setHealthReport(remoteNodeHealthStatus.getHealthReport());
       rmNode.setLastHealthReportTime(
           remoteNodeHealthStatus.getLastHealthReportTime());
-      if (remoteNodeHealthStatus.getIsNodeHealthy()) {
+      //Add by ME
+      NodeTrustStatus remoteNodeTrustStatus = statusEvent.getNodeTrustStatus();
+      rmNode.setTrustReport(remoteNodeTrustStatus.getTrustReport());
+      rmNode.setLastTrustReportTime(
+          remoteNodeTrustStatus.getLastTrustReportTime());
+      //Add by ME
+      if(!remoteNodeHealthStatus.getIsNodeHealthy()){
+    	  return NodeState.UNHEALTHY; 
+      }
+      if (!remoteNodeTrustStatus.getIsNodeTrust()) {
+    	  rmNode.updateMetricsForDeactivatedNode(NodeState.UNHEALTHY, NodeState.UNTRUST);
+    	  return NodeState.UNTRUST;
+      }
+       {
         rmNode.context.getDispatcher().getEventHandler().handle(
             new NodeAddedSchedulerEvent(rmNode));
         rmNode.context.getDispatcher().getEventHandler().handle(
@@ -654,11 +771,49 @@ public class RMNodeImpl implements RMNode, EventHandler<RMNodeEvent> {
         rmNode.updateMetricsForRejoinedNode(NodeState.UNHEALTHY);
         return NodeState.RUNNING;
       }
-
-      return NodeState.UNHEALTHY;
     }
   }
 
+  public static class StatusUpdateWhenUnTrustTransition implements
+  MultipleArcTransition<RMNodeImpl, RMNodeEvent, NodeState> {
+	    @Override
+	    public NodeState transition(RMNodeImpl rmNode, RMNodeEvent event) {
+	      RMNodeStatusEvent statusEvent = (RMNodeStatusEvent) event;
+
+	      // Switch the last heartbeatresponse.
+	      rmNode.latestNodeHeartBeatResponse = statusEvent.getLatestResponse();
+	      NodeHealthStatus remoteNodeHealthStatus = statusEvent.getNodeHealthStatus();
+	      rmNode.setHealthReport(remoteNodeHealthStatus.getHealthReport());
+	      rmNode.setLastHealthReportTime(
+	          remoteNodeHealthStatus.getLastHealthReportTime());
+	      //Add by ME
+	      NodeTrustStatus remoteNodeTrustStatus = statusEvent.getNodeTrustStatus();
+	      rmNode.setTrustReport(remoteNodeTrustStatus.getTrustReport());
+	      rmNode.setLastTrustReportTime(
+	          remoteNodeTrustStatus.getLastTrustReportTime());
+	      //Add by ME
+	      if(!remoteNodeHealthStatus.getIsNodeHealthy()){
+	    	  rmNode.updateMetricsForDeactivatedNode(NodeState.UNTRUST, NodeState.UNHEALTHY);
+	    	  return NodeState.UNHEALTHY; 
+	      }
+	      if (!remoteNodeTrustStatus.getIsNodeTrust()) {
+	    	  return NodeState.UNTRUST;
+	      }
+	       {
+	        rmNode.context.getDispatcher().getEventHandler().handle(
+	            new NodeAddedSchedulerEvent(rmNode));
+	        rmNode.context.getDispatcher().getEventHandler().handle(
+	                new NodesListManagerEvent(
+	                    NodesListManagerEventType.NODE_USABLE, rmNode));
+	        // ??? how about updating metrics before notifying to ensure that
+	        // notifiers get update metadata because they will very likely query it
+	        // upon notification
+	        // Update metrics
+	        rmNode.updateMetricsForRejoinedNode(NodeState.UNTRUST);
+	        return NodeState.RUNNING;
+	      }
+	    }	  
+  }
   @Override
   public List<UpdatedContainerInfo> pullContainerUpdates() {
     List<UpdatedContainerInfo> latestContainerInfoList = 

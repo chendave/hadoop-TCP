@@ -42,6 +42,8 @@ public class ClusterMetrics {
   @Metric("# of decommissioned NMs") MutableGaugeInt numDecommissionedNMs;
   @Metric("# of lost NMs") MutableGaugeInt numLostNMs;
   @Metric("# of unhealthy NMs") MutableGaugeInt numUnhealthyNMs;
+  //Add by ME
+  @Metric("# of untrust NMs") MutableGaugeInt numUntrustNMs;
   @Metric("# of Rebooted NMs") MutableGaugeInt numRebootedNMs;
   
   private static final MetricsInfo RECORD_INFO = info("ClusterMetrics",
@@ -121,7 +123,19 @@ public class ClusterMetrics {
   public void decrNumUnhealthyNMs() {
     numUnhealthyNMs.decr();
   }
+   // Add by ME
+  //Untrust NMs
+  public int getUntrustNMs(){
+	  return numUntrustNMs.value();
+  }
   
+  public void incrNumUntrustNMs(){
+	  numUntrustNMs.incr();
+  }
+  
+  public void decrNumUntrustNMs(){
+	  numUntrustNMs.decr();
+  } 
   //Rebooted NMs
   public int getNumRebootedNMs() {
     return numRebootedNMs.value();

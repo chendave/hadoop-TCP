@@ -29,13 +29,15 @@ enum NodeActionProto {
   RESYNC = 1;
   SHUTDOWN = 2;
 }
-
+////Add by ME
+////Add nodeTrustStatus
 message NodeStatusProto {
   optional NodeIdProto node_id = 1;
   optional int32 response_id = 2;
   repeated ContainerStatusProto containersStatuses = 3;
   optional NodeHealthStatusProto nodeHealthStatus = 4;
   repeated ApplicationIdProto keep_alive_applications = 5;
+  optional NodeTrustStatusProto nodeTrustStatus = 6;
 }
 
 message MasterKeyProto {
@@ -47,4 +49,11 @@ message NodeHealthStatusProto {
   optional bool is_node_healthy = 1;
   optional string health_report = 2;
   optional int64 last_health_report_time = 3;
+}
+////Add by ME
+////add NodeTrustStatusProto
+message NodeTrustStatusProto {
+  optional bool is_node_trust = 1;
+  optional string trust_report = 2;
+  optional int64 last_trust_report_time =3;
 }

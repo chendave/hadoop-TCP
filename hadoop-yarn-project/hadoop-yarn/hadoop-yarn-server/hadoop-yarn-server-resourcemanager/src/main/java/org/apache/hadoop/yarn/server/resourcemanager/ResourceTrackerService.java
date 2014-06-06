@@ -259,6 +259,10 @@ public class ResourceTrackerService extends AbstractService implements
       return resync;
     }
 
+//Add by ME
+      LOG.info("BHBHBHBHBHBHBHBH");
+       LOG.info("+++++++++++++++++++++++" + remoteNodeStatus.getNodeTrustStatus().getTrustReport() 
+    		  + remoteNodeStatus.getNodeTrustStatus().getIsNodeTrust());
     // Send ping
     this.nmLivelinessMonitor.receivedPing(nodeId);
 
@@ -307,6 +311,7 @@ public class ResourceTrackerService extends AbstractService implements
     // 4. Send status to RMNode, saving the latest response.
     this.rmContext.getDispatcher().getEventHandler().handle(
         new RMNodeStatusEvent(nodeId, remoteNodeStatus.getNodeHealthStatus(),
+	    remoteNodeStatus.getNodeTrustStatus(),
             remoteNodeStatus.getContainersStatuses(), 
             remoteNodeStatus.getKeepAliveApplications(), nodeHeartBeatResponse));
 

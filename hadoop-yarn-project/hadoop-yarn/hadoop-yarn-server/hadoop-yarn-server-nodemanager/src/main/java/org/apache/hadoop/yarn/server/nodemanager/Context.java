@@ -25,6 +25,7 @@ import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.ContainerId;
 import org.apache.hadoop.yarn.api.records.NodeId;
 import org.apache.hadoop.yarn.server.api.records.NodeHealthStatus;
+import org.apache.hadoop.yarn.server.api.records.NodeTrustStatus;
 import org.apache.hadoop.yarn.server.nodemanager.containermanager.application.Application;
 import org.apache.hadoop.yarn.server.nodemanager.containermanager.container.Container;
 import org.apache.hadoop.yarn.server.nodemanager.security.NMContainerTokenSecretManager;
@@ -59,6 +60,9 @@ public interface Context {
   NMTokenSecretManagerInNM getNMTokenSecretManager();
 
   NodeHealthStatus getNodeHealthStatus();
+
+  //Add by ME
+  NodeTrustStatus getNodeTrustStatus();
 
   ContainerManagementProtocol getContainerManager();
 }

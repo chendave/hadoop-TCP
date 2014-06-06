@@ -85,6 +85,10 @@ public interface RMNode {
    */
   public long getLastHealthReportTime();
   
+  //Add by ME
+  public String getTrustReport();
+  
+  public long getLastTrustReportTime();
   /**
    * the total available resource.
    * @return the total available resource.

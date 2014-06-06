@@ -153,7 +153,8 @@ message ApplicationReportProto {
   optional string applicationType = 18;
   optional hadoop.common.TokenProto am_rm_token = 19;
 }
-
+////Add by ME
+////Add NS_UNTRUST
 enum NodeStateProto {
   NS_NEW = 1; 
   NS_RUNNING = 2; 
@@ -161,13 +162,15 @@ enum NodeStateProto {
   NS_DECOMMISSIONED = 4; 
   NS_LOST = 5;
   NS_REBOOTED = 6;
+  NS_UNTRUST = 7;
 }
 
 message NodeIdProto {
   optional string host = 1;
   optional int32 port = 2;
 }
-
+////Add by ME
+////Add trust_report
 message NodeReportProto {
   optional NodeIdProto nodeId = 1;
   optional string httpAddress = 2;
@@ -178,6 +181,8 @@ message NodeReportProto {
   optional NodeStateProto node_state = 7;
   optional string health_report = 8;
   optional int64 last_health_report_time = 9;
+  optional string trust_report = 10;
+  optional int64 last_trust_report_time = 11;
 }
 
 

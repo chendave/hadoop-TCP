@@ -186,7 +186,25 @@ public class BuilderUtils {
     nodeReport.setLastHealthReportTime(lastHealthReportTime);
     return nodeReport;
   }
-
+//Add by ME
+  public static NodeReport newNodeReport(NodeId nodeId, NodeState nodeState, 
+	      String httpAddress, String rackName, Resource used, Resource capability,
+	      int numContainers, String healthReport, long lastHealthReportTime,
+	      String trustReport, long lastTrustReportTime) {
+	    NodeReport nodeReport = recordFactory.newRecordInstance(NodeReport.class);
+	    nodeReport.setNodeId(nodeId);
+	    nodeReport.setNodeState(nodeState);
+	    nodeReport.setHttpAddress(httpAddress);
+	    nodeReport.setRackName(rackName);
+	    nodeReport.setUsed(used);
+	    nodeReport.setCapability(capability);
+	    nodeReport.setNumContainers(numContainers);
+	    nodeReport.setHealthReport(healthReport);
+	    nodeReport.setLastHealthReportTime(lastHealthReportTime);
+	    nodeReport.setTrustReport(trustReport);
+	    nodeReport.setLastTrustReportTime(lastTrustReportTime);
+	    return nodeReport;
+	  }
   public static ContainerStatus newContainerStatus(ContainerId containerId,
       ContainerState containerState, String diagnostics, int exitStatus) {
     ContainerStatus containerStatus = recordFactory

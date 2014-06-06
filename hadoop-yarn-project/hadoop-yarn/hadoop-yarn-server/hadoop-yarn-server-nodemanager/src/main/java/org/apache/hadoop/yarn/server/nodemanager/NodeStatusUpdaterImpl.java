@@ -59,6 +59,7 @@ import org.apache.hadoop.yarn.server.api.protocolrecords.RegisterNodeManagerResp
 import org.apache.hadoop.yarn.server.api.records.MasterKey;
 import org.apache.hadoop.yarn.server.api.records.NodeAction;
 import org.apache.hadoop.yarn.server.api.records.NodeHealthStatus;
+import org.apache.hadoop.yarn.server.api.records.NodeTrustStatus;
 import org.apache.hadoop.yarn.server.api.records.NodeStatus;
 import org.apache.hadoop.yarn.server.nodemanager.containermanager.ContainerManagerImpl;
 import org.apache.hadoop.yarn.server.nodemanager.containermanager.container.Container;
@@ -98,6 +99,8 @@ public class NodeStatusUpdaterImpl extends AbstractService implements
   private long durationToTrackStoppedContainers;
 
   private final NodeHealthCheckerService healthChecker;
+//Add by ME
+  private final NodeTrustCheckerService trustChecker;
   private final NodeManagerMetrics metrics;
 
   private Runnable statusUpdaterRunnable;
@@ -105,9 +108,10 @@ public class NodeStatusUpdaterImpl extends AbstractService implements
   private long rmIdentifier = ResourceManagerConstants.RM_INVALID_IDENTIFIER;
 
   public NodeStatusUpdaterImpl(Context context, Dispatcher dispatcher,
-      NodeHealthCheckerService healthChecker, NodeManagerMetrics metrics) {
+      NodeHealthCheckerService healthChecker,NodeTrustCheckerService trustChecker, NodeManagerMetrics metrics) {
     super(NodeStatusUpdaterImpl.class.getName());
     this.healthChecker = healthChecker;
+    this.trustChecker = trustChecker;
     this.context = context;
     this.dispatcher = dispatcher;
     this.metrics = metrics;
@@ -115,6 +119,17 @@ public class NodeStatusUpdaterImpl extends AbstractService implements
         new LinkedHashMap<ContainerId, Long>();
   }
 
+  public NodeStatusUpdaterImpl(Context context, Dispatcher dispatcher,
+      NodeHealthCheckerService healthChecker, NodeManagerMetrics metrics) {
+    super(NodeStatusUpdaterImpl.class.getName());
+    this.healthChecker = healthChecker;
+    this.trustChecker = null ;
+    this.context = context;
+    this.dispatcher = dispatcher;
+    this.metrics = metrics;
+    this.recentlyStoppedContainers =
+        new LinkedHashMap<ContainerId, Long>();
+  }
   @Override
   protected void serviceInit(Configuration conf) throws Exception {
     int memoryMb = 
@@ -340,6 +355,17 @@ public class NodeStatusUpdaterImpl extends AbstractService implements
                 + ", " + nodeHealthStatus.getHealthReport());
     }
     nodeStatus.setNodeHealthStatus(nodeHealthStatus);
+    //Add by ME
+    NodeTrustStatus nodeTrustStatus = this.context.getNodeTrustStatus();
+    nodeTrustStatus.setTrustReport(trustChecker.getTrusthReport());
+    nodeTrustStatus.setIsNodeTrust(trustChecker.isTrust(nodeStatus.getNodeId().getHost()));
+    nodeTrustStatus.setLastTrustReportTime(
+    		trustChecker.getLastTrustReportTime());
+    if(LOG.isDebugEnabled()){
+        LOG.debug("Node's trust-status : " + nodeTrustStatus.getIsNodeTrust()
+                + ", " + nodeTrustStatus.getTrustReport());  	
+    }
+    nodeStatus.setNodeTrustStatus(nodeTrustStatus);
 
     List<ApplicationId> keepAliveAppIds = createKeepAliveApplicationList();
     nodeStatus.setKeepAliveApplications(keepAliveAppIds);

@@ -36,6 +36,8 @@ public enum NodeState {
   /** Node is unhealthy */
   UNHEALTHY, 
   
+  //Add by ME
+  UNTRUST,
   /** Node is out of service */
   DECOMMISSIONED, 
   
@@ -46,6 +48,6 @@ public enum NodeState {
   REBOOTED;
   
   public boolean isUnusable() {
-    return (this == UNHEALTHY || this == DECOMMISSIONED || this == LOST);
+    return (this == DECOMMISSIONED || this == LOST);
   }
 }
