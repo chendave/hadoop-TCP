@@ -332,10 +332,18 @@ public class YarnConfiguration extends Configuration {
   ////////////////////////////////
   // Node Manager Configs
   ////////////////////////////////
+
   
   /** Prefix for all node manager configs.*/
   public static final String NM_PREFIX = "yarn.nodemanager.";
-
+  
+  //Add by ME
+  /**AttestService variables**/
+  public static final String DATADIR = "/opt/intel/cloudsecurity/trustagent/cert/";
+  public static final String ATTESTATIONTRUSTSTORE= "hadoop-oat.jks";
+  public static final String  TRUSTSTOREPASSWORD = "password";
+  public static final String  ATTESTATIONSERVER = "hadoop-node2.sh.intel.com";
+  
   /** Environment variables that will be sent to containers.*/
   public static final String NM_ADMIN_USER_ENV = NM_PREFIX + "admin-env";
   public static final String DEFAULT_NM_ADMIN_USER_ENV = "MALLOC_ARENA_MAX=$MALLOC_ARENA_MAX";

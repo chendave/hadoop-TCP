@@ -1,4 +1,21 @@
-
+/**
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+package org.apache.hadoop.yarn.server.nodemanager;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +35,8 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.hadoop.conf.Configuration;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonParser;
@@ -25,52 +44,75 @@ import org.codehaus.jackson.JsonToken;
 
 
 public class AttestationService {
+    //some variables are used for formating to jason style 
     private static final String HEADER_HOSTS = "hosts";
     private static final String HEADER_HOST_NAME = "host_name";
     private static final String HEADER_RESULT = "trust_lvl";
     private static final String HEADER_VTIME = "vtime";
     private static final String CONTENT_TYPE = "application/json";
-    private static final AttestationService instance = new AttestationService();
-    private static final Log log = LogFactory.getLog(AttestationService.class);
-    
+   
+    //some variables of OAT service 
     private static final String DataDir = "/opt/intel/cloudsecurity/trustagent/cert/";
     private static final String AttestationTruststore= "hadoop-oat.jks";
+    private static final String truststorePassword = "password";
+    //OAT server 
+    private static final String attestationServer = "hadoop-node2.sh.intel.com";
+    private static final String TRUSTED = "TRUSTED";
 
-    public static void main(String args[]){
-    	List<String> hosts = new ArrayList();
-    	hosts.add("hadoop-node1");
-    	hosts.add("hadoop-node2");
-    	AttestationService as = AttestationService.getInstance();
-    	List<AttestationValue> values = as.attestHosts(hosts);
-    	System.out.println("values:" + values.toString());
+    private static final AttestationService instance = new AttestationService();
+    private static final Log log = LogFactory.getLog(AttestationService.class);
+
+    public static boolean testHost(String hostname){
+    if(hostname == null)
+	return false;
+    List<String> hosts = new ArrayList();
+    hosts.add(hostname);
+    log.info(
+	     "Return the TRUST status of " + hostname + " from OAT server."	
+	    );
+    if(AttestationService.getInstance().attestHosts(hosts) == null)
+	return false;
+    return AttestationService
+		.getInstance()
+		.attestHosts(hosts)
+		.get(0)
+		.getTrustLevel()
+		.toString()
+		.contains(TRUSTED);
     }
-    public static HttpClient getClient() {
+    public static HttpClient getClient(Configuration conf)throws Exception {
         HttpClient httpClient = new HttpClient();
-            URL trustStoreUrl;
-            try {
+        URL trustStoreUrl;
+           // try {
                 int port = 8181;
-                trustStoreUrl = new URL("file://" + DataDir + AttestationTruststore);
-                String truststorePassword = "password";
-                String attestationServer = "10.239.131.234";
+               // trustStoreUrl = new URL("file://" + DataDir + AttestationTruststore);
+                trustStoreUrl = new URL("file://"
+                                + conf.getTrimmed(YarnConfiguration.DATADIR,DataDir)
+                                + conf.getTrimmed(YarnConfiguration.ATTESTATIONTRUSTSTORE,AttestationTruststore));
                 // registering the https protocol with a socket factory that
                 // provides client authentication.
-                ProtocolSocketFactory factory = new AuthSSLProtocolSocketFactory(getTrustStore(trustStoreUrl.getPath(),truststorePassword));
+                ProtocolSocketFactory factory = new AuthSSLProtocolSocketFactory(
+						getTrustStore(trustStoreUrl.getPath(),
+								conf.getTrimmed(YarnConfiguration.TRUSTSTOREPASSWORD,truststorePassword)
+							     )
+						);
                 Protocol clientAuthHTTPS = new Protocol("https", factory, port);
-                httpClient.getHostConfiguration().setHost(attestationServer,
+                httpClient.getHostConfiguration().setHost(conf.getTrimmed(YarnConfiguration.ATTESTATIONSERVER, attestationServer),
                         port, clientAuthHTTPS);
-            } catch (Exception e) {
-                log.fatal(
-                        "Failed to init AuthSSLProtocolSocketFactory. SSL connections will not work",
-                        e);
-                        
-         
-            }
+            //} catch (Exception e) {
+              //  log.fatal(
+                //        "Failed to init AuthSSLProtocolSocketFactory. SSL connections will not work",
+                  //      e);
+           // }
         
         return httpClient;
     }
 
     public static KeyStore getTrustStore(String filePath, String password) throws IOException,
-            KeyStoreException, CertificateException, NoSuchAlgorithmException {
+            									KeyStoreException,
+										CertificateException,
+										NoSuchAlgorithmException
+    {
         InputStream in = new FileInputStream(filePath);
         KeyStore ks = KeyStore.getInstance("JKS");
         ks.load(in, password.toCharArray());
@@ -89,38 +131,36 @@ public class AttestationService {
         List<AttestationValue> values = new ArrayList<AttestationValue>();
 
         PostMethod postMethod = new PostMethod("/" + pollURI);
+	Configuration conf = new YarnConfiguration();
         try {
             postMethod.setRequestEntity(new StringRequestEntity(
                     writeListJson(hosts)));
             postMethod.addRequestHeader("Accept", CONTENT_TYPE);
             postMethod.addRequestHeader("Content-type", CONTENT_TYPE);
-            HttpClient httpClient = getClient();
-            System.out.println("hosts:"+writeListJson(hosts));
-            System.out.println("#################################");
+            //HttpClient httpClient = getClient();
+            HttpClient httpClient;
+	    try{
+	    httpClient = getClient(conf);
+	    }catch(Exception e){
+		return null;
+	    }
             int statusCode = httpClient.executeMethod(postMethod);
             String strResponse = postMethod.getResponseBodyAsString();
-            System.out.println("return attested result:" + strResponse);
             log.debug("return attested result:" + strResponse);
-            //System.out.println("return attested result:");
             if (statusCode == 200) {
                 values = parsePostedResp(strResponse);
             } else {
                 log.error("attestation error:" + strResponse);
-            	//System.out.println("attestation error:");
             }
         } catch (JsonParseException e) {
             log.error(
                     String.format("Failed to parse result: [%s]",
                             e.getMessage()), e);
-                           
-        	//System.out.println("Failed to parse result:");
         } catch (IOException e) {
             log.error(
                     String.format(
                             "Failed to attest hosts: [%s], make sure hosts are up and reachable",
                             e.getMessage()), e);
-                            
-        	//System.out.println("Failed to attest hosts: [%s], make sure hosts are up and reachable");
         } finally {
             postMethod.releaseConnection();
         }
@@ -160,7 +200,6 @@ public class AttestationService {
                         if (value.getHostName() != null) {
                             log.debug("host_name:" + value.getHostName()
                                     + ", trustLevel:" + value.getTrustLevel());
-                        	//System.out.println("host_name:");
                             values.add(value);
                         }
                         jParser.nextToken();
