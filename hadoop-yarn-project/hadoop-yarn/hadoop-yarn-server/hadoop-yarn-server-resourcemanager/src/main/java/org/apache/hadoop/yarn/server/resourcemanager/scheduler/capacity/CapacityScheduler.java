@@ -172,8 +172,17 @@ public class CapacityScheduler
 
   private Map<String, CSQueue> queues = new ConcurrentHashMap<String, CSQueue>();
 
-  private Map<NodeId, FiCaSchedulerNode> nodes = 
+  private static  Map<NodeId, FiCaSchedulerNode> nodes = 
       new ConcurrentHashMap<NodeId, FiCaSchedulerNode>();
+  //Add by ME
+  //public static  void  printNodes(){
+//	  LOG.info("There are " + nodes.size() + "node");
+//	  for(Map.Entry<NodeId,FiCaSchedulerNode> entry :nodes.entrySet()){
+//		  LOG.info(entry.getKey().getHost());
+//	  }
+	  
+  //}
+
 
   private Resource clusterResource = 
     RecordFactoryProvider.getRecordFactory(null).newRecordInstance(Resource.class);

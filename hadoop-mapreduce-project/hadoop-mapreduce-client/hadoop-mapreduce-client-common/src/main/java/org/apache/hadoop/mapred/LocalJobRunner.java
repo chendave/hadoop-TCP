@@ -93,7 +93,9 @@ public class LocalJobRunner implements ClientProtocol {
   public long getProtocolVersion(String protocol, long clientVersion) {
     return ClientProtocol.versionID;
   }
-
+//Add by ME
+  @Override
+  public void printNodes(){}
   @Override
   public ProtocolSignature getProtocolSignature(String protocol,
       long clientVersion, int clientMethodsHash) throws IOException {

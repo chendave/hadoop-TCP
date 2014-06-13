@@ -197,6 +197,16 @@ public class MockNodes {
     public long getLastHealthReportTime() {
       return lastHealthReportTime;
     }
+   
+    @Override
+    public String getTrustReport() {
+      return null;
+    }
+
+    @Override
+    public long getLastTrustReportTime() {
+      return 0;
+    }
   };
 
   private static RMNode buildRMNode(int rack, final Resource perNode, NodeState state, String httpAddr) {

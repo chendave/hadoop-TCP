@@ -450,8 +450,6 @@ public class ClientRMService extends AbstractService implements
     }
     Collection<RMNode> nodes = RMServerUtils.queryRMNodes(rmContext,
         nodeStates);
-      LOG.info("CCCCCCCCCCCCCCCCCCCCCCC");
-      LOG.info("DDDDDDDDDDDDDDDDDDDD " + nodeStates.toString() + " node.size " + nodes.size()); 
     List<NodeReport> nodeReports = new ArrayList<NodeReport>(nodes.size());
     for (RMNode nodeInfo : nodes) {
       nodeReports.add(createNodeReports(nodeInfo));

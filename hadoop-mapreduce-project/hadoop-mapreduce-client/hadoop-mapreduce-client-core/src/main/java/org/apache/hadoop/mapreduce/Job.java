@@ -39,6 +39,8 @@ import org.apache.hadoop.mapreduce.task.JobContextImpl;
 import org.apache.hadoop.mapreduce.util.ConfigUtil;
 import org.apache.hadoop.util.StringUtils;
 
+//Add by ME
+//import org.apache.hadoop.mapred.ResourceMgrDelegate;
 /**
  * The job submitter's view of the Job.
  * 
@@ -1313,9 +1315,10 @@ public class Job extends JobContextImpl implements JobContext {
     Job.TaskStatusFilter filter;
     Configuration clientConf = getConfiguration();
     filter = Job.getTaskOutputFilter(clientConf);
-     //Add by ME
-    cluster.printNodes();
     JobID jobId = getJobID();
+    //Add by ME
+   // ResourceMgrDelegate.printNodes();
+    cluster.printNodes();
     LOG.info("Running job: " + jobId);
     int eventCounter = 0;
     boolean profiling = getProfileEnabled();

@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience.Private;
 import org.apache.hadoop.classification.InterfaceStability.Unstable;
 import org.apache.hadoop.yarn.api.protocolrecords.GetClusterNodesResponse;
@@ -36,7 +38,7 @@ import com.google.protobuf.TextFormat;
 @Private
 @Unstable
 public class GetClusterNodesResponsePBImpl extends GetClusterNodesResponse {
-
+private static final Log LOG = LogFactory.getLog(GetClusterNodesResponsePBImpl.class);
   GetClusterNodesResponseProto proto = 
     GetClusterNodesResponseProto.getDefaultInstance();
   GetClusterNodesResponseProto.Builder builder = null;
