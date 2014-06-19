@@ -48,6 +48,7 @@ import org.apache.hadoop.yarn.api.protocolrecords.GetNewApplicationResponse;
 import org.apache.hadoop.yarn.api.protocolrecords.GetQueueInfoRequest;
 import org.apache.hadoop.yarn.api.protocolrecords.GetQueueUserAclsInfoRequest;
 import org.apache.hadoop.yarn.api.protocolrecords.KillApplicationRequest;
+import org.apache.hadoop.yarn.api.protocolrecords.impl.pb.GetClusterNodesResponsePBImpl;
 import org.apache.hadoop.yarn.api.protocolrecords.SubmitApplicationRequest;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.api.records.ApplicationReport;
@@ -70,7 +71,8 @@ import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.hadoop.yarn.util.Records;
 
 import com.google.common.annotations.VisibleForTesting;
-
+//Add by ME
+//import org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler;
 @Private
 @Unstable
 public class YarnClientImpl extends YarnClient {
@@ -92,6 +94,10 @@ public class YarnClientImpl extends YarnClient {
       YarnConfiguration.DEFAULT_RM_ADDRESS, YarnConfiguration.DEFAULT_RM_PORT);
   }
 
+//Add by ME
+  //public static void printNodes(){
+//	  CapacityScheduler.printNodes();
+ // }
   @Override
   protected void serviceInit(Configuration conf) throws Exception {
     this.rmAddress = getRmAddress(conf);

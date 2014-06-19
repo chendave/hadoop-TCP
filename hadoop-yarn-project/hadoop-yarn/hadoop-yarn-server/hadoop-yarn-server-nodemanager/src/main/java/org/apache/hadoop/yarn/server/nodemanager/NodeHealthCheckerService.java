@@ -20,7 +20,7 @@ package org.apache.hadoop.yarn.server.nodemanager;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.service.CompositeService;
-
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 /**
  * The class which provides functionality of checking the health of the node and
  * reporting back to the service for which the health checker has been asked to
@@ -48,7 +48,7 @@ public class NodeHealthCheckerService extends CompositeService {
     }
     addService(dirsHandler);
 //Add by ME
-    this.attestNodeTrust = conf.getBoolean(YarnConfiguration.NM_TRUST_CHECK_ENABLE, true);
+    this.attestNodeTrust = conf.getBoolean(YarnConfiguration.NM_TRUST_CHECK_ENABLE, false);
     super.serviceInit(conf);
   }
 
@@ -71,10 +71,10 @@ public class NodeHealthCheckerService extends CompositeService {
   boolean isHealthy(String hostname) {
     boolean scriptHealthStatus = (nodeHealthScriptRunner == null) ? true
         : nodeHealthScriptRunner.isHealthy();//Add by ME
-     if(!this.attestNodeTrust)
-           return scriptHealthStatus && dirsHandler.areDisksHealthy();
-     boolean isTrust = AttestationService.testHost(hostname);	
-     return scriptHealthStatus && dirsHandler.areDisksHealthy() && isTrust;
+	if(!this.attestNodeTrust)
+	   return scriptHealthStatus && dirsHandler.areDisksHealthy();
+	boolean isTrust = AttestationService.testHost(hostname);
+    return scriptHealthStatus && dirsHandler.areDisksHealthy() && isTrust;
   }
 
   boolean isHealthy(){

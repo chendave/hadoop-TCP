@@ -146,18 +146,17 @@ public class YARNRunner implements ClientProtocol {
   public void setResourceMgrDelegate(ResourceMgrDelegate resMgrDelegate) {
     this.resMgrDelegate = resMgrDelegate;
   }
-  
+
+//Add by ME
+  @Override
+  public  void printNodes(){
+	resMgrDelegate.printNodes();
+}  
   @Override
   public void cancelDelegationToken(Token<DelegationTokenIdentifier> arg0)
       throws IOException, InterruptedException {
     throw new UnsupportedOperationException("Use Token.renew instead");
   }
-
-//Add by ME
-  @Override
-  public  void printNodes(){
-        resMgrDelegate.printNodes();
-}
 
   @Override
   public TaskTrackerInfo[] getActiveTrackers() throws IOException,

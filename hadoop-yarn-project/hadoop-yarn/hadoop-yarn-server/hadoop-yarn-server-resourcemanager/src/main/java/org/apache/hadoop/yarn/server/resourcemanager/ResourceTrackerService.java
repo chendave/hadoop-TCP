@@ -259,10 +259,6 @@ public class ResourceTrackerService extends AbstractService implements
       return resync;
     }
 
-//Add by ME
-      LOG.info("BHBHBHBHBHBHBHBH");
-       LOG.info("+++++++++++++++++++++++" + remoteNodeStatus.getNodeTrustStatus().getTrustReport() 
-    		  + remoteNodeStatus.getNodeTrustStatus().getIsNodeTrust());
     // Send ping
     this.nmLivelinessMonitor.receivedPing(nodeId);
 

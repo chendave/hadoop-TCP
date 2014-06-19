@@ -34,10 +34,12 @@ import org.apache.hadoop.yarn.proto.YarnProtos.ApplicationIdProto;
 import org.apache.hadoop.yarn.proto.YarnProtos.ContainerStatusProto;
 import org.apache.hadoop.yarn.proto.YarnProtos.NodeIdProto;
 import org.apache.hadoop.yarn.proto.YarnServerCommonProtos.NodeHealthStatusProto;
+import org.apache.hadoop.yarn.proto.YarnServerCommonProtos.NodeTrustStatusProto;
 import org.apache.hadoop.yarn.proto.YarnServerCommonProtos.NodeStatusProto;
 import org.apache.hadoop.yarn.proto.YarnServerCommonProtos.NodeStatusProtoOrBuilder;
 import org.apache.hadoop.yarn.server.api.records.NodeHealthStatus;
 import org.apache.hadoop.yarn.server.api.records.NodeStatus;
+import org.apache.hadoop.yarn.server.api.records.NodeTrustStatus;
     
 
 public class NodeStatusPBImpl extends ProtoBase<NodeStatusProto> implements
@@ -49,6 +51,9 @@ public class NodeStatusPBImpl extends ProtoBase<NodeStatusProto> implements
   private NodeId nodeId = null;
   private List<ContainerStatus> containers = null;
   private NodeHealthStatus nodeHealthStatus = null;
+  //Add by ME
+  private NodeTrustStatus nodeTrustStatus = null;
+
   private List<ApplicationId> keepAliveApplications = null;
   
   public NodeStatusPBImpl() {
@@ -76,6 +81,10 @@ public class NodeStatusPBImpl extends ProtoBase<NodeStatusProto> implements
     }
     if (this.nodeHealthStatus != null) {
       builder.setNodeHealthStatus(convertToProtoFormat(this.nodeHealthStatus));
+    }
+    //Add by ME
+    if(this.nodeTrustStatus != null) {
+    	builder.setNodeTrustStatus(convertToProtoFormat(this.nodeTrustStatus));
     }
     if (this.keepAliveApplications != null) {
       addKeepAliveApplicationsToProto();
@@ -277,7 +286,27 @@ public class NodeStatusPBImpl extends ProtoBase<NodeStatusProto> implements
     }
     this.nodeHealthStatus = healthStatus;
   }
+  @Override
+  public synchronized NodeTrustStatus getNodeTrustStatus() {
+    NodeStatusProtoOrBuilder p = viaProto ? proto : builder;
+    if (nodeTrustStatus != null) {
+      return nodeTrustStatus;
+    }
+    if (!p.hasNodeTrustStatus()) {
+      return null;
+    }
+    nodeTrustStatus = convertFromProtoFormat(p.getNodeTrustStatus());
+    return nodeTrustStatus;
+  }
 
+  @Override
+  public synchronized void setNodeTrustStatus(NodeTrustStatus trustStatus) {
+    maybeInitBuilder();
+    if (trustStatus == null) {
+      builder.clearNodeTrustStatus();
+    }
+    this.nodeTrustStatus = trustStatus;
+  }
   private NodeIdProto convertToProtoFormat(NodeId nodeId) {
     return ((NodeIdPBImpl)nodeId).getProto();
   }
@@ -295,6 +324,15 @@ public class NodeStatusPBImpl extends ProtoBase<NodeStatusProto> implements
     return new NodeHealthStatusPBImpl(proto);
   }
 
+  //Add by ME
+  private NodeTrustStatusProto convertToProtoFormat(
+		  NodeTrustStatus trustStatus) {
+	    return ((NodeTrustStatusPBImpl) trustStatus).getProto();
+	  }
+
+  private NodeTrustStatus convertFromProtoFormat(NodeTrustStatusProto proto) {
+	    return new NodeTrustStatusPBImpl(proto);
+	  }
   private ContainerStatusPBImpl convertFromProtoFormat(ContainerStatusProto c) {
     return new ContainerStatusPBImpl(c);
   }

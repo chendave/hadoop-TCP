@@ -60,7 +60,8 @@ import org.apache.hadoop.yarn.security.AMRMTokenIdentifier;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 
 import com.google.common.annotations.VisibleForTesting;
-
+//Add by ME
+//import org.apache.hadoop.yarn.client.api.impl.YarnClientImpl;
 public class ResourceMgrDelegate extends YarnClient {
   private static final Log LOG = LogFactory.getLog(ResourceMgrDelegate.class);
       
@@ -85,26 +86,27 @@ public class ResourceMgrDelegate extends YarnClient {
     start();
   }
 
+  //Add by ME
 public  void printNodes(){
-        LOG.info("##################");
-        try {
-                LOG.info("There are " + getNodeReports(NodeState.UNHEALTHY).size() + " unhealthy nodes.");
-                for(java.util.Iterator<NodeReport> i = getNodeReports(NodeState.UNHEALTHY).iterator(); i.hasNext();){
-                        LOG.info(i.next().getNodeId().getHost() + " ***unhealthy***");
-                }
-                LOG.info("There are " + getNodeReports(NodeState.RUNNING).size() + " healthy nodes");
-                for(java.util.Iterator<NodeReport> i = getNodeReports(NodeState.RUNNING).iterator(); i.hasNext();){
-                        LOG.info(i.next().getNodeId().getHost() + " ***healthy***");
-                }
-        } catch (YarnException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-        } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-        }
+	LOG.info("##################");
+	try {
+		LOG.info("There are " + getNodeReports().size());
+		for(java.util.Iterator<NodeReport> i = getNodeReports().iterator(); i.hasNext();){
+			NodeReport temp = i.next();
+			LOG.info(temp.getNodeId() + " " + temp.getNodeState()+ " " );
+		}
+		LOG.info("There are " + getNodeReports(NodeState.UNTRUST).size() + " untrust nodes");
+		for(java.util.Iterator<NodeReport> i = getNodeReports(NodeState.UNTRUST).iterator(); i.hasNext();){
+			LOG.info(i.next().getNodeId().getHost() + " ***untrust***");
+		}
+	} catch (YarnException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
 }
-
   @Override
   protected void serviceInit(Configuration conf) throws Exception {
     this.rmAddress = conf.getSocketAddr(YarnConfiguration.RM_ADDRESS,

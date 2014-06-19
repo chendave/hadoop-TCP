@@ -127,11 +127,11 @@ public class Cluster {
   ClientProtocol getClient() {
     return client;
   }
-
- //Add by ME
+  
+//Add by ME
  public void printNodes(){
-          client.printNodes();
-  } 
+	  client.printNodes();
+  }
 
   Configuration getConf() {
     return conf;
