@@ -103,7 +103,8 @@ class NodesPage extends RmView {
         } else {
           // No filter. User is asking for all nodes. Make sure you skip the
           // unhealthy nodes.
-          if (ni.getState() == NodeState.UNHEALTHY) {
+	//Add by ME
+          if (ni.getState() == NodeState.UNHEALTHY || ni.getState() == NodeState.UNTRUST) {
             continue;
           }
         }

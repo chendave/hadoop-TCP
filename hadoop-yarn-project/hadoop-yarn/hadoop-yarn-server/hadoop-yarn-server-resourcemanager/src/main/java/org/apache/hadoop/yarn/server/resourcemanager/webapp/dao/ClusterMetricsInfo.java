@@ -49,6 +49,8 @@ public class ClusterMetricsInfo {
   protected long totalMB;
   protected int totalNodes;
   protected int lostNodes;
+  //Add by ME
+  protected int untrustNodes;
   protected int unhealthyNodes;
   protected int decommissionedNodes;
   protected int rebootedNodes;
@@ -80,6 +82,8 @@ public class ClusterMetricsInfo {
     this.totalMB = availableMB + allocatedMB;
     this.activeNodes = clusterMetrics.getNumActiveNMs();
     this.lostNodes = clusterMetrics.getNumLostNMs();
+    //Add by ME
+    this.untrustNodes = clusterMetrics.getUntrustNMs();
     this.unhealthyNodes = clusterMetrics.getUnhealthyNMs();
     this.decommissionedNodes = clusterMetrics.getNumDecommisionedNMs();
     this.rebootedNodes = clusterMetrics.getNumRebootedNMs();
@@ -153,6 +157,11 @@ public class ClusterMetricsInfo {
 
   public int getRebootedNodes() {
     return this.rebootedNodes;
+  }
+
+//Add by ME
+  public int getUntrustNodes() {
+	  return this.untrustNodes;
   }
 
   public int getUnhealthyNodes() {
